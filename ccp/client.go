@@ -1,4 +1,4 @@
-package main
+package ccp
 
 import (
 	"bufio"
@@ -8,10 +8,7 @@ import (
 	"net"
 )
 
-type ID int
-
 type client struct {
-	id       ID
 	conn     net.Conn
 	commands chan<- command
 }
@@ -36,6 +33,10 @@ func (c *client) handle(message []byte) {
 	body := bytes.TrimSpace(bytes.TrimPrefix(message, cmd))
 	cmd = bytes.ToUpper(cmd)
 
+	if len(body) == 0 {
+		c.err(errors.New("The string len must be > 0"))
+		return
+	}
 	switch string(cmd) {
 	case "UP":
 		c.convert(UP, body)
@@ -58,9 +59,8 @@ func (c *client) err(e error) {
 	c.conn.Write([]byte("Error: " + e.Error() + "\n"))
 }
 
-func newClient(id ID, conn net.Conn, commands chan<- command) *client {
+func newClient(conn net.Conn, commands chan<- command) *client {
 	return &client{
-		id:       id,
 		conn:     conn,
 		commands: commands,
 	}
