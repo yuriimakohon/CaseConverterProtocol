@@ -1,4 +1,4 @@
-package main
+package ccp
 
 import (
 	"errors"
@@ -11,7 +11,7 @@ type server struct {
 	commands chan command
 }
 
-func (s *server) start(address string) error {
+func (s *server) Start(address string) error {
 	l, err := net.Listen("tcp", address)
 	if err != nil {
 		return errors.New("Server didn't start:\n\t" + err.Error())
@@ -23,20 +23,22 @@ func (s *server) start(address string) error {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			cli := newClient(0, conn, s.commands)
+			cli := newClient(conn, s.commands)
 			go cli.listen()
 		}
 	}
 }
 
 func (s *server) run() {
-	select {
-	case cmd := <-s.commands:
-		switch cmd.cmdType {
-		case UP:
-			s.convert(strings.ToUpper, cmd)
-		case LOW:
-			s.convert(strings.ToLower, cmd)
+	for {
+		select {
+		case cmd := <-s.commands:
+			switch cmd.cmdType {
+			case UP:
+				s.convert(strings.ToUpper, cmd)
+			case LOW:
+				s.convert(strings.ToLower, cmd)
+			}
 		}
 	}
 }
@@ -45,7 +47,7 @@ func (s *server) convert(f func(string) string, cmd command) {
 	cmd.recipient.Write([]byte(f(string(cmd.body))))
 }
 
-func newServer() *server {
+func NewServer() *server {
 	return &server{
 		commands: make(chan command),
 	}
