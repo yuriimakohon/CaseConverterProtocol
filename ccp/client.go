@@ -13,55 +13,50 @@ type client struct {
 	commands chan<- command
 }
 
-func (c *client) listen() error {
+func (s *server) listen() {
 	for {
-		msg, err := bufio.NewReader(c.conn).ReadBytes('\n')
+		msg, err := bufio.NewReader(s.conn).ReadBytes('\n')
 		if err == io.EOF {
-			return nil
+			return
 		}
 
 		if err != nil {
-			return err
+			panic(err)
 		}
 
-		c.handle(msg)
+		s.handle(msg)
 	}
 }
 
-func (c *client) handle(message []byte) {
+func (s *server) handle(message []byte) {
 	cmd := bytes.TrimSpace(bytes.Split(message, []byte(" "))[0])
 	body := bytes.TrimSpace(bytes.TrimPrefix(message, cmd))
 	cmd = bytes.ToUpper(cmd)
 
 	if len(body) == 0 {
-		c.err(errors.New("The string len must be > 0"))
+		s.err(errors.New("the string len must be greater than 0"))
 		return
 	}
 	switch string(cmd) {
 	case "UP":
-		c.convert(UP, body)
+		s.sendCMD(UP, body)
 	case "LOW":
-		c.convert(LOW, body)
+		s.sendCMD(LOW, body)
+	case "CAMEL":
+		s.sendCMD(CAMEL, body)
 	default:
-		c.err(errors.New("Unknown command: " + string(cmd)))
+		s.err(errors.New("Unknown command: " + string(cmd)))
 	}
 }
 
-func (c *client) convert(cmdType TYPE, body []byte) {
-	c.commands <- command{
+func (s *server) sendCMD(cmdType TYPE, body []byte) {
+	s.commands <- command{
 		cmdType:   cmdType,
 		body:      body,
-		recipient: c.conn,
+		recipient: s.conn,
 	}
 }
 
-func (c *client) err(e error) {
-	c.conn.Write([]byte("Error: " + e.Error() + "\n"))
-}
-
-func newClient(conn net.Conn, commands chan<- command) *client {
-	return &client{
-		conn:     conn,
-		commands: commands,
-	}
+func (s *server) err(e error) {
+	s.conn.Write([]byte("Error: " + e.Error() + "\n"))
 }

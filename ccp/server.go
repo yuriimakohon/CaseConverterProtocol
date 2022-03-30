@@ -9,6 +9,7 @@ import (
 
 type server struct {
 	commands chan command
+	conn     net.Conn
 }
 
 func (s *server) Start(address string) error {
@@ -23,8 +24,8 @@ func (s *server) Start(address string) error {
 		if err != nil {
 			fmt.Println(err)
 		} else {
-			cli := newClient(conn, s.commands)
-			go cli.listen()
+			s.conn = conn
+			go s.listen()
 		}
 	}
 }
@@ -38,6 +39,8 @@ func (s *server) run() {
 				s.convert(strings.ToUpper, cmd)
 			case LOW:
 				s.convert(strings.ToLower, cmd)
+			case CAMEL:
+				s.convert(Camel, cmd)
 			}
 		}
 	}

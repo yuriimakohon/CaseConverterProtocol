@@ -7,6 +7,7 @@ type TYPE int
 const (
 	UP TYPE = iota
 	LOW
+	CAMEL
 )
 
 type command struct {

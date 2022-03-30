@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Case_Converter_Protocol/ccp"
+	"CaseConverterProtocol/ccp"
 	"fmt"
 )
 
